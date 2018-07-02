@@ -142,7 +142,7 @@ void main() {
   });
 
   testWidgets('Text Fade', (WidgetTester tester) async {
-    var t = const Text(
+    const Text text = const Text(
       'Pp PPp PPPp PPPPp PPPPpp PPPPppp PPPPppppp ',
       style: const TextStyle(color: Colors.black),
       maxLines: 3,
@@ -150,33 +150,31 @@ void main() {
     );
 
 
-    var w = makeChain(
-      [
-        (Widget child) => new RepaintBoundary(child: child),
-        (Widget child) => new Center(child: child),
-        (Widget child) => new Container(width: 200.0, height: 200.0, color: Colors.green, child: child),
-        (Widget child) => new Center(child: child),
-        (Widget child) => new Container(width: 100.0, color: Colors.blue, child: child),
+    final Widget body1 = makeChain(
+      <WidgetChainLink>[
+        (Widget next) => new RepaintBoundary(child: next),
+        (Widget next) => new Center(child: next),
+        (Widget next) => new Container(width: 200.0, height: 200.0, color: Colors.green, child: next),
+        (Widget next) => new Center(child: next),
+        (Widget next) => new Container(width: 100.0, color: Colors.blue, child: next),
       ],
-      t
+      text
     );
 
-    var l = compressLinks(
-      [
-        (Widget child) => new RepaintBoundary(child: child),
-        (Widget child) => new Center(child: child),
-        (Widget child) => new Container(width: 200.0, height: 200.0, color: Colors.green, child: child),
-        (Widget child) => new Center(child: child),
-//        (Widget child) => new Container(width: 100.0, color: Colors.blue, child: child),
-        Container.chainLink(width: 100.0, color: Colors.blue)
-      ],
-    );
+    final WidgetChainLink link = compressLinks(<WidgetChainLink>[
+      (Widget next) => new RepaintBoundary(child: next),
+      (Widget next) => new Center(child: next),
+      (Widget next) => new Container(width: 200.0, height: 200.0, color: Colors.green, child: next),
+      (Widget next) => new Center(child: next),
+      (Widget next) => new Container(width: 100.0, color: Colors.blue, child: next),
+    ]);
+    final Widget body2 = link(text);
 
     await tester.pumpWidget(
         new MaterialApp(
           home: new Scaffold(
             backgroundColor: Colors.transparent,
-            body: l(t) // w // l(t)
+            body: body1 // or body2
           )
         )
     );

@@ -4808,17 +4808,20 @@ FlutterErrorDetails _debugReportException(
   return details;
 }
 
-typedef Widget WidgetChainLink(Widget child);
+/// Function that represents a single link in the chain
+typedef Widget WidgetChainLink(Widget next);
 
+/// Compress multiple links into one single link
 WidgetChainLink compressLinks(List<WidgetChainLink> links) {
-  final List<WidgetChainLink> compressed = [links.last];
+  final List<WidgetChainLink> compressed = <WidgetChainLink>[links.last];
   for(int i = links.length - 2; i >= 0; i--) {
-    WidgetChainLink last = compressed.last;
-    compressed.add((Widget child) => links[i](last(child)));
+    final WidgetChainLink last = compressed.last;
+    compressed.add((Widget next) => links[i](last(next)));
   }
   return compressed.last;
 }
 
+/// Returns an instantiated widget chain that consists a list of chain links and a final leaf widget
 Widget makeChain(List<WidgetChainLink> links, Widget leaf) {
   Widget result = leaf;
   for(WidgetChainLink link in links.reversed) {
