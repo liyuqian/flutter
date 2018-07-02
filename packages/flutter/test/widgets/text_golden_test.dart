@@ -142,31 +142,41 @@ void main() {
   });
 
   testWidgets('Text Fade', (WidgetTester tester) async {
+    var t = const Text(
+      'Pp PPp PPPp PPPPp PPPPpp PPPPppp PPPPppppp ',
+      style: const TextStyle(color: Colors.black),
+      maxLines: 3,
+      overflow: TextOverflow.fade,
+    );
+
+
+    var w = makeChain(
+      [
+        (Widget child) => new RepaintBoundary(child: child),
+        (Widget child) => new Center(child: child),
+        (Widget child) => new Container(width: 200.0, height: 200.0, color: Colors.green, child: child),
+        (Widget child) => new Center(child: child),
+        (Widget child) => new Container(width: 100.0, color: Colors.blue, child: child),
+      ],
+      t
+    );
+
+    var l = compressLinks(
+      [
+        (Widget child) => new RepaintBoundary(child: child),
+        (Widget child) => new Center(child: child),
+        (Widget child) => new Container(width: 200.0, height: 200.0, color: Colors.green, child: child),
+        (Widget child) => new Center(child: child),
+//        (Widget child) => new Container(width: 100.0, color: Colors.blue, child: child),
+        Container.chainLink(width: 100.0, color: Colors.blue)
+      ],
+    );
+
     await tester.pumpWidget(
         new MaterialApp(
           home: new Scaffold(
             backgroundColor: Colors.transparent,
-            body: new RepaintBoundary(
-              child: Center(
-                child: new Container(
-                  width: 200.0,
-                  height: 200.0,
-                  color: Colors.green,
-                  child: new Center(
-                    child: new Container(
-                      width: 100.0,
-                      color: Colors.blue,
-                      child: const Text(
-                        'Pp PPp PPPp PPPPp PPPPpp PPPPppp PPPPppppp ',
-                        style: const TextStyle(color: Colors.black),
-                        maxLines: 3,
-                        overflow: TextOverflow.fade,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            body: l(t) // w // l(t)
           )
         )
     );

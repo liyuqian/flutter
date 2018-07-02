@@ -268,6 +268,55 @@ class Container extends StatelessWidget {
           : constraints,
        super(key: key);
 
+  /// Creates a widget that combines common painting, positioning, and sizing widgets.
+  ///
+  /// The `height` and `width` values include the padding.
+  ///
+  /// The `color` argument is a shorthand for `decoration: new
+  /// BoxDecoration(color: color)`, which means you cannot supply both a `color`
+  /// and a `decoration` argument. If you want to have both a `color` and a
+  /// `decoration`, you can pass the color as the `color` argument to the
+  /// `BoxDecoration`.
+  static WidgetChainLink chainLink({
+    Key key,
+    AlignmentGeometry alignment,
+    EdgeInsetsGeometry padding,
+    Color color,
+    Decoration decoration,
+    Decoration foregroundDecoration,
+    double width,
+    double height,
+    BoxConstraints constraints,
+    EdgeInsetsGeometry margin,
+    Matrix4 transform,
+  }) {
+    return (Widget child) => new Container(
+      key: key,
+      alignment: alignment,
+      padding: padding,
+      color: color,
+      decoration: decoration,
+      foregroundDecoration: foregroundDecoration,
+      width: width,
+      height: height,
+      constraints: constraints,
+      margin: margin,
+      transform: transform,
+      child: child,
+    );
+  }
+
+
+//  static WidgetChainLink chainLink(Map<Symbol, dynamic> initArgs) {
+//
+//    return (Widget child) {
+//      initArgs[#child] = child;
+//      reflectClass(Container).new
+//      Function.apply(new Container, initArgs)
+//      return new Container(initArgs);
+//    }
+//  }
+
   /// The [child] contained by the container.
   ///
   /// If null, and if the [constraints] are unbounded or also null, the

@@ -4807,3 +4807,22 @@ FlutterErrorDetails _debugReportException(
   FlutterError.reportError(details);
   return details;
 }
+
+typedef Widget WidgetChainLink(Widget child);
+
+WidgetChainLink compressLinks(List<WidgetChainLink> links) {
+  final List<WidgetChainLink> compressed = [links.last];
+  for(int i = links.length - 2; i >= 0; i--) {
+    WidgetChainLink last = compressed.last;
+    compressed.add((Widget child) => links[i](last(child)));
+  }
+  return compressed.last;
+}
+
+Widget makeChain(List<WidgetChainLink> links, Widget leaf) {
+  Widget result = leaf;
+  for(WidgetChainLink link in links.reversed) {
+    result = link(result);
+  }
+  return result;
+}
