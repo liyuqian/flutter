@@ -1571,7 +1571,7 @@ class _InspectorOverlayLayer extends Layer {
   double _textPainterMaxWidth;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     if (!selection.active)
       return;
 

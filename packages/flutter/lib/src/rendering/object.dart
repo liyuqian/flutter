@@ -159,6 +159,7 @@ class PaintingContext extends ClipContext {
       }());
     }
     child._layer.offset = offset;
+    child._layer.markDirty();
     _appendLayer(child._layer);
   }
 
@@ -231,6 +232,7 @@ class PaintingContext extends ClipContext {
       return true;
     }());
     _currentLayer.picture = _recorder.endRecording();
+    _currentLayer.markDirty();
     _currentLayer = null;
     _recorder = null;
     _canvas = null;

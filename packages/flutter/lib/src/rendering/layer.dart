@@ -32,6 +32,10 @@ import 'debug.dart';
 ///  * [RenderView.compositeFrame], which implements this recomposition protocol
 ///    for painting [RenderObject] trees on the display.
 abstract class Layer extends AbstractNode with DiagnosticableTreeMixin {
+  /// The [isDirty] is initialized to true so we'll always call [addToScene] for
+  /// newly created [Layer]s.
+  Layer() { _isDirty = true; }
+
   /// This layer's parent in the layer tree.
   ///
   /// The [parent] of the root node in the layer tree is null.
@@ -53,39 +57,56 @@ abstract class Layer extends AbstractNode with DiagnosticableTreeMixin {
   @mustCallSuper
   void remove() {
     parent?._removeChild(this);
+    parent?.markDirty();
   }
 
-  /// Replaces this layer with the given layer in the parent layer's child list.
-  void replaceWith(Layer newLayer) {
-    assert(parent != null);
-    assert(attached == parent.attached);
-    assert(newLayer.parent == null);
-    assert(newLayer._nextSibling == null);
-    assert(newLayer._previousSibling == null);
-    assert(!newLayer.attached);
-    newLayer._nextSibling = nextSibling;
-    if (_nextSibling != null)
-      _nextSibling._previousSibling = newLayer;
-    newLayer._previousSibling = previousSibling;
-    if (_previousSibling != null)
-      _previousSibling._nextSibling = newLayer;
-    assert(() {
-      Layer node = this;
-      while (node.parent != null)
-        node = node.parent;
-      assert(node != newLayer); // indicates we are about to create a cycle
+  /// Whether this layer has been modified since the last [addToScene].
+  bool get isDirty => _isDirty;
+  bool _isDirty;
+
+  /// Mark that this layer needs to call [addToScene] again.
+  void markDirty() { _isDirty = true; }
+
+  /// Whether there's any layer in the subtree that's dirty.
+  bool get isSubtreeDirty => _isSubtreeDirty;
+  bool _isSubtreeDirty;
+
+  /// DFS and update the [_isSubtreeDirty] bit of all the layers in the subtree.
+  void updateSubtreeDirtiness() {
+    _isSubtreeDirty = _isDirty;
+    assert((){
+      _numDirtySubtrees = _numCleanSubtrees = 0;
       return true;
     }());
-    parent.adoptChild(newLayer);
-    assert(newLayer.attached == parent.attached);
-    if (parent.firstChild == this)
-      parent._firstChild = newLayer;
-    if (parent.lastChild == this)
-      parent._lastChild = newLayer;
-    _nextSibling = null;
-    _previousSibling = null;
-    parent.dropChild(this);
-    assert(!attached);
+    if (this is ContainerLayer) {
+      final ContainerLayer container = this;
+      for(Layer child = container.firstChild; child != null; child = child.nextSibling) {
+        child.updateSubtreeDirtiness();
+        _isSubtreeDirty = _isSubtreeDirty || child.isSubtreeDirty;
+        assert((){
+          _numDirtySubtrees += child._numDirtySubtrees;
+          _numCleanSubtrees += child._numCleanSubtrees;
+          return true;
+        }());
+      }
+    }
+    assert((){
+      if (_isSubtreeDirty) {
+        _numDirtySubtrees++;
+      } else {
+        _numCleanSubtrees++;
+      }
+      return true;
+    }());
+  }
+
+  int _numDirtySubtrees;
+  int _numCleanSubtrees;
+
+  /// Debug how many subtrees are dirty and how many are clean.
+  void debugDirtyStat() {
+    final double ratio = _numDirtySubtrees.toDouble() / (_numDirtySubtrees + _numCleanSubtrees);
+    print('numDirtySubtrees=$_numDirtySubtrees numCleanSubtrees=$_numCleanSubtrees dirtyRatio=$ratio}');
   }
 
   /// Returns the value of [S] that corresponds to the point described by
@@ -101,8 +122,15 @@ abstract class Layer extends AbstractNode with DiagnosticableTreeMixin {
   ///   * [AnnotatedRegionLayer], for placing values in the layer tree.
   S find<S>(Offset regionOffset);
 
+  /// Calls the [onAddToScene] of the subclass and clear the [isDirty] bit.
+  @mustCallSuper
+  void addToScene(ui.SceneBuilder builder) {
+    onAddToScene(builder);
+    _isDirty = false;
+  }
+
   /// Override this method to upload this layer to the engine.
-  void addToScene(ui.SceneBuilder builder);
+  void onAddToScene(ui.SceneBuilder builder);
 
   /// The object responsible for creating this layer.
   ///
@@ -166,7 +194,7 @@ class PictureLayer extends Layer {
   bool willChangeHint = false;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     builder.addPicture(Offset.zero, picture, isComplexHint: isComplexHint, willChangeHint: willChangeHint);
   }
 
@@ -232,7 +260,7 @@ class TextureLayer extends Layer {
   final bool freeze;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     builder.addTexture(
       textureId,
       offset: rect.topLeft,
@@ -299,7 +327,7 @@ class PerformanceOverlayLayer extends Layer {
   final bool checkerboardOffscreenLayers;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     assert(optionsMask != null);
     builder.addPerformanceOverlay(optionsMask, overlayRect);
     builder.setRasterizerTracingThreshold(rasterizerThreshold);
@@ -360,6 +388,7 @@ class ContainerLayer extends Layer {
 
   @override
   void attach(Object owner) {
+    markDirty(); // TODO(liyuqian): do we need it here?
     super.attach(owner);
     Layer child = firstChild;
     while (child != null) {
@@ -380,6 +409,7 @@ class ContainerLayer extends Layer {
 
   /// Adds the given layer to the end of this layer's child list.
   void append(Layer child) {
+    markDirty();
     assert(child != this);
     assert(child != firstChild);
     assert(child != lastChild);
@@ -409,6 +439,7 @@ class ContainerLayer extends Layer {
     assert(child.attached == attached);
     assert(_debugUltimatePreviousSiblingOf(child, equals: firstChild));
     assert(_debugUltimateNextSiblingOf(child, equals: lastChild));
+    markDirty();
     if (child._previousSibling == null) {
       assert(_firstChild == child);
       _firstChild = child._nextSibling;
@@ -434,6 +465,7 @@ class ContainerLayer extends Layer {
 
   /// Removes all of this layer's children from its child list.
   void removeAllChildren() {
+    markDirty();
     Layer child = firstChild;
     while (child != null) {
       final Layer next = child.nextSibling;
@@ -448,7 +480,7 @@ class ContainerLayer extends Layer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     addChildrenToScene(builder);
   }
 
@@ -561,7 +593,7 @@ class OffsetLayer extends ContainerLayer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     // Skia has a fast path for concatenating scale/translation only matrices.
     // Hence this operation should be fast. For retained rendering, we don't
     // want to push the offset down to each leaf node. Otherwise, changing an
@@ -657,7 +689,7 @@ class ClipRectLayer extends ContainerLayer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     bool enabled = true;
     assert(() {
       enabled = !debugDisableClipLayers;
@@ -713,7 +745,7 @@ class ClipRRectLayer extends ContainerLayer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     bool enabled = true;
     assert(() {
       enabled = !debugDisableClipLayers;
@@ -769,7 +801,7 @@ class ClipPathLayer extends ContainerLayer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     bool enabled = true;
     assert(() {
       enabled = !debugDisableClipLayers;
@@ -820,7 +852,7 @@ class TransformLayer extends OffsetLayer {
   bool _inverseDirty = true;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     _lastEffectiveTransform = transform;
     if (offset != Offset.zero) {
       _lastEffectiveTransform = new Matrix4.translationValues(offset.dx, offset.dy, 0.0)
@@ -880,7 +912,7 @@ class OpacityLayer extends ContainerLayer {
   int alpha;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     bool enabled = true;
     assert(() {
       enabled = !debugDisableOpacityLayers;
@@ -927,7 +959,7 @@ class ShaderMaskLayer extends ContainerLayer {
   BlendMode blendMode;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     builder.pushShaderMask(shader, maskRect, blendMode);
     addChildrenToScene(builder);
     builder.pop();
@@ -957,7 +989,7 @@ class BackdropFilterLayer extends ContainerLayer {
   ui.ImageFilter filter;
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     builder.pushBackdropFilter(filter);
     addChildrenToScene(builder);
     builder.pop();
@@ -1028,7 +1060,7 @@ class PhysicalModelLayer extends ContainerLayer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     bool enabled = true;
     assert(() {
       enabled = !debugDisablePhysicalShapeLayers;
@@ -1137,7 +1169,7 @@ class LeaderLayer extends ContainerLayer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     assert(offset != null);
     _lastOffset = offset;
     if (_lastOffset != Offset.zero)
@@ -1341,7 +1373,7 @@ class FollowerLayer extends ContainerLayer {
   }
 
   @override
-  void addToScene(ui.SceneBuilder builder) {
+  void onAddToScene(ui.SceneBuilder builder) {
     assert(link != null);
     assert(showWhenUnlinked != null);
     if (link.leader == null && !showWhenUnlinked) {
