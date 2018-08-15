@@ -4,7 +4,7 @@
 
 import 'dart:async';
 import 'dart:collection';
-import 'dart:ui' as ui show Image, ImageFilter, Picture, Scene, SceneBuilder;
+import 'dart:ui' as ui show EngineLayer, Image, ImageFilter, Picture, Scene, SceneBuilder;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
@@ -52,6 +52,17 @@ abstract class Layer extends AbstractNode with DiagnosticableTreeMixin {
   /// This layer's previous sibling in the parent layer's child list.
   Layer get previousSibling => _previousSibling;
   Layer _previousSibling;
+
+  ui.EngineLayer _engineLayer;
+  /// The layer in our C++ engine.
+  ui.EngineLayer get engineLayer => _engineLayer;
+  /// Update the engine layer with the the one that's just returned from
+  /// [addToScene]. TODO(liyuqian): Maybe put this in [addToScene] directly
+  /// once we have engine layer for every push layer operation.
+  @mustCallSuper
+  void updateEngineLayer(ui.EngineLayer engineLayer) {
+    _engineLayer = engineLayer;
+  }
 
   /// Removes this layer from its parent layer's child list.
   @mustCallSuper
@@ -122,14 +133,17 @@ abstract class Layer extends AbstractNode with DiagnosticableTreeMixin {
   ///   * [AnnotatedRegionLayer], for placing values in the layer tree.
   S find<S>(Offset regionOffset);
 
-  /// Calls the [onAddToScene] of the subclass and clear the [isDirty] bit.
+  /// Override this method to upload this layer to the engine.
+  ///
+  /// The `layerOffset` is the accumulated offset of this layer's parent from the
+  /// origin of the builder's coordinate system.
   @mustCallSuper
   void addToScene(ui.SceneBuilder builder) {
     onAddToScene(builder);
     _isDirty = false;
   }
 
-  /// Override this method to upload this layer to the engine.
+  /// To be overridden
   void onAddToScene(ui.SceneBuilder builder);
 
   /// The object responsible for creating this layer.
@@ -918,9 +932,20 @@ class OpacityLayer extends ContainerLayer {
       enabled = !debugDisableOpacityLayers;
       return true;
     }());
+<<<<<<< HEAD
     if (enabled)
       builder.pushOpacity(alpha);
     addChildrenToScene(builder);
+=======
+    if (enabled) {
+      if (isSubtreeDirty) {
+        updateEngineLayer(builder.pushOpacity(alpha));
+      } else {
+        builder.pushOpacity(alpha, retainedLayer: engineLayer);
+      }
+    }
+    addChildrenToScene(builder, layerOffset);
+>>>>>>> Temp check
     if (enabled)
       builder.pop();
   }
