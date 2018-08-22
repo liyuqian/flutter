@@ -935,11 +935,11 @@ class OpacityLayer extends ContainerLayer {
     if (enabled) {
       if (isSubtreeDirty) {
         updateEngineLayer(builder.pushOpacity(alpha));
+        addChildrenToScene(builder, layerOffset);
       } else {
         builder.pushOpacity(alpha, retainedLayer: engineLayer);
       }
     }
-    addChildrenToScene(builder);
     if (enabled)
       builder.pop();
   }
@@ -1088,27 +1088,27 @@ class PhysicalModelLayer extends ContainerLayer {
     if (enabled) {
       if (isSubtreeDirty) {
         print('PhysicalModelLayer subtree is dirty...'); // TODO TEST
-        builder.pushPhysicalShape(
-          path: clipPath,
-          elevation: elevation,
-          color: color,
-          shadowColor: shadowColor,
-          clipBehavior: clipBehavior,
-          retainedLayer: null,
-        );
-      } else {
-        print('PhysicalModelLayer subtree is not dirty!!!'); // TODO TEST
         updateEngineLayer(builder.pushPhysicalShape(
           path: clipPath,
           elevation: elevation,
           color: color,
           shadowColor: shadowColor,
           clipBehavior: clipBehavior,
-          retainedLayer: engineLayer,
+          retainedLayer: null,
         ));
+        addChildrenToScene(builder);
+      } else {
+        print('PhysicalModelLayer subtree is not dirty!!!'); // TODO TEST
+        builder.pushPhysicalShape(
+          path: clipPath,
+          elevation: elevation,
+          color: color,
+          shadowColor: shadowColor,
+          clipBehavior: clipBehavior,
+          retainedLayer: engineLayer,
+        );
       }
     }
-    addChildrenToScene(builder);
     if (enabled)
       builder.pop();
   }
