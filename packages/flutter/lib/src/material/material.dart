@@ -340,7 +340,7 @@ class _MaterialState extends State<Material> with TickerProviderStateMixin {
         curve: Curves.fastOutSlowIn,
         duration: widget.animationDuration,
         shape: BoxShape.rectangle,
-        clipBehavior: widget.clipBehavior,
+        clipBehavior: Clip.antiAliasWithSaveLayer,
         borderRadius: BorderRadius.zero,
         elevation: widget.elevation,
         color: backgroundColor,
@@ -353,13 +353,13 @@ class _MaterialState extends State<Material> with TickerProviderStateMixin {
     final ShapeBorder shape = _getShape();
 
     if (widget.type == MaterialType.transparency)
-      return _transparentInterior(shape: shape, clipBehavior: widget.clipBehavior, contents: contents);
+      return _transparentInterior(shape: shape, clipBehavior: Clip.antiAliasWithSaveLayer, contents: contents);
 
     return new _MaterialInterior(
       curve: Curves.fastOutSlowIn,
       duration: widget.animationDuration,
       shape: shape,
-      clipBehavior: widget.clipBehavior,
+      clipBehavior: Clip.antiAliasWithSaveLayer,
       elevation: widget.elevation,
       color: backgroundColor,
       shadowColor: widget.shadowColor,
