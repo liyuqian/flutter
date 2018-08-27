@@ -402,7 +402,7 @@ class ContainerLayer extends Layer {
 
   @override
   void attach(Object owner) {
-    markDirty(); // TODO(liyuqian): do we need it here?
+//    markDirty(); // TODO(liyuqian): do we need it here?
     super.attach(owner);
     Layer child = firstChild;
     while (child != null) {
