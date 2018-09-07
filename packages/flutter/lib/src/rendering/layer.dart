@@ -935,7 +935,7 @@ class OpacityLayer extends ContainerLayer {
     if (enabled) {
       if (isSubtreeDirty) {
         updateEngineLayer(builder.pushOpacity(alpha));
-        addChildrenToScene(builder, layerOffset);
+        addChildrenToScene(builder);
       } else {
         builder.pushOpacity(alpha, retainedLayer: engineLayer);
       }
@@ -1094,7 +1094,7 @@ class PhysicalModelLayer extends ContainerLayer {
           color: color,
           shadowColor: shadowColor,
           clipBehavior: clipBehavior,
-          retainedLayer: null,
+          retainedLayer: null
         ));
         addChildrenToScene(builder);
       } else {
@@ -1105,7 +1105,7 @@ class PhysicalModelLayer extends ContainerLayer {
           color: color,
           shadowColor: shadowColor,
           clipBehavior: clipBehavior,
-          retainedLayer: engineLayer,
+          retainedLayer: engineLayer
         );
       }
     }
