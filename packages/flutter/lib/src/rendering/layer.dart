@@ -1087,7 +1087,10 @@ class PhysicalModelLayer extends ContainerLayer {
     }());
     if (enabled) {
       if (isSubtreeDirty) {
-        print('PhysicalModelLayer subtree is dirty...'); // TODO TEST
+        assert((){
+          print('PhysicalModelLayer subtree is dirty...'); // TODO TEST
+          return true;
+        }());
         updateEngineLayer(builder.pushPhysicalShape(
           path: clipPath,
           elevation: elevation,
@@ -1098,7 +1101,10 @@ class PhysicalModelLayer extends ContainerLayer {
         ));
         addChildrenToScene(builder);
       } else {
-        print('PhysicalModelLayer subtree is not dirty!!!'); // TODO TEST
+        assert((){
+          print('PhysicalModelLayer subtree is not dirty!!!'); // TODO TEST
+          return true;
+        }());
         builder.pushPhysicalShape(
           path: clipPath,
           elevation: elevation,
