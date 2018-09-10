@@ -39,9 +39,11 @@ class _MountainViewPageTransition extends StatelessWidget {
     // TODO(ianh): tell the transform to be un-transformed for hit testing
     return new SlideTransition(
       position: _positionAnimation,
-      child: new FadeTransition(
-        opacity: _opacityAnimation,
-        child: child,
+      child: new RepaintBoundary(
+        child: new FadeTransition(
+          opacity: _opacityAnimation,
+          child: child,
+        ),
       ),
     );
   }
