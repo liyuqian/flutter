@@ -614,9 +614,13 @@ class OffsetLayer extends ContainerLayer {
     // offset layer on the very high level could cascade the change to too many
     // leaves.
     final Matrix4 matrix = new Matrix4.translationValues(offset.dx, offset.dy, 0.0);
-    builder.pushTransform(matrix.storage);
-    addChildrenToScene(builder);
-    builder.pop();
+    if (isSubtreeDirty || !(parent is OpacityLayer)) {
+      updateEngineLayer(builder.pushTransform(matrix.storage));
+      addChildrenToScene(builder);
+      builder.pop();
+    } else {
+      builder.pushTransform(matrix.storage, retainedLayer: engineLayer);
+    }
   }
 
   @override
@@ -872,9 +876,14 @@ class TransformLayer extends OffsetLayer {
       _lastEffectiveTransform = new Matrix4.translationValues(offset.dx, offset.dy, 0.0)
         ..multiply(_lastEffectiveTransform);
     }
-    builder.pushTransform(_lastEffectiveTransform.storage);
-    addChildrenToScene(builder);
-    builder.pop();
+
+    if (isSubtreeDirty) {
+      updateEngineLayer(builder.pushTransform(_lastEffectiveTransform.storage));
+      addChildrenToScene(builder);
+      builder.pop();
+    } else {
+      builder.pushTransform(_lastEffectiveTransform.storage, retainedLayer: engineLayer);
+    }
   }
 
   @override

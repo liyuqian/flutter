@@ -158,8 +158,10 @@ class PaintingContext extends ClipContext {
         return true;
       }());
     }
+    if (child._layer.offset != offset) {
+      child._layer.markDirty();
+    }
     child._layer.offset = offset;
-    child._layer.markDirty();
     _appendLayer(child._layer);
   }
 
