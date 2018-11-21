@@ -154,7 +154,7 @@ class Directionality extends InheritedWidget {
 /// subtree) to rebuild each frame, which is not very efficient. Consider using
 /// an [AnimatedOpacity] instead.
 ///
-/// ## Transparent image
+/// ## Transparent image or color
 ///
 /// If only a single [Image] or [Color] needs to be composited with an opacity
 /// between 0.0 and 1.0, it's much faster to directly use them without [Opacity]
