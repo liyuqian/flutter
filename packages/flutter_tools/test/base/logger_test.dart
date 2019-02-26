@@ -239,6 +239,12 @@ void main() {
           doWhileAsync(time, () => ansiStatus.ticks < 30); // three seconds
           expect(ansiStatus.seemsSlow, isTrue);
           expect(outputStdout().join('\n'), contains('This is taking an unexpectedly long time.'));
+
+          // Test that the number of '\b' is correct.
+          final String longTimeOutput = outputStdout().join('\n');
+          const String finalOutput = 'Hello world                     ⣯ (This is taking an unexpectedly long time.)';
+          expect('\b'.allMatches(longTimeOutput).length * 2, equals(longTimeOutput.length - finalOutput.length));
+
           ansiStatus.stop();
           expect(outputStdout().join('\n'), contains('(!)'));
           done = true;

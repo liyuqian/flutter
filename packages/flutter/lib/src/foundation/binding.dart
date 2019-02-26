@@ -52,13 +52,13 @@ abstract class BindingBase {
   BindingBase() {
     developer.Timeline.startSync('Framework initialization');
 
-    assert(!_debugInitialized);
-    initInstances();
-    assert(_debugInitialized);
-
     assert(!_debugServiceExtensionsRegistered);
     initServiceExtensions();
     assert(_debugServiceExtensionsRegistered);
+
+    assert(!_debugInitialized);
+    initInstances();
+    assert(_debugInitialized);
 
     developer.postEvent('Flutter.FrameworkInitialization', <String, String>{});
 

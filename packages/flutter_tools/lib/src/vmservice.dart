@@ -1237,8 +1237,10 @@ class Isolate extends ServiceObjectOwner {
       return await invokeRpcRaw(method, params: params);
     } on rpc.RpcException catch (e) {
       // If an application is not using the framework
-      if (e.code == rpc_error_code.METHOD_NOT_FOUND)
+      if (e.code == rpc_error_code.METHOD_NOT_FOUND) {
+        printError('RPC method not found: ' + method);
         return null;
+      }
       rethrow;
     }
   }
@@ -1293,7 +1295,10 @@ class Isolate extends ServiceObjectOwner {
 
   Future<bool> flutterAlreadyPaintedFirstUsefulFrame() async {
     final Map<String, dynamic> result = await invokeFlutterExtensionRpcRaw('ext.flutter.didSendFirstFrameEvent');
-    return result['enabled'] == 'true';
+    if (result == null) {
+      printError('RPC returned null unexpectedly.');
+    }
+    return result != null && result['enabled'] == 'true';
   }
 
   Future<Map<String, dynamic>> uiWindowScheduleFrame() {

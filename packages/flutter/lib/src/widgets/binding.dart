@@ -294,6 +294,8 @@ mixin WidgetsBinding on BindingBase, SchedulerBinding, GestureBinding, RendererB
       registerServiceExtension(
         name: 'didSendFirstFrameEvent',
         callback: (_) async {
+          print('didSendFirstFrameEvent _needToReportFirstFrame=$_needToReportFirstFrame');  // TODO TEST
+
           return <String, dynamic>{
             // This is defined to return a STRING, not a boolean.
             // Devtools, the Intellij plugin, and the flutter tool all depend
@@ -707,7 +709,9 @@ mixin WidgetsBinding on BindingBase, SchedulerBinding, GestureBinding, RendererB
       }());
     }
     profile(() {
+      print('widgets/binding profile drawFrame _needsToReportFirstFrame=$_needToReportFirstFrame, _reportFirstFrame=$_reportFirstFrame');  // TODO TEST
       if (_needToReportFirstFrame && _reportFirstFrame) {
+        print('Post event: Widgets completed first useful frame');  // TODO TEST
         developer.Timeline.instantSync('Widgets completed first useful frame');
         developer.postEvent('Flutter.FirstFrame', <String, dynamic>{});
         _needToReportFirstFrame = false;

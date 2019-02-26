@@ -14,7 +14,8 @@ import 'vmservice.dart';
 // Names of some of the Timeline events we care about.
 const String _kFlutterEngineMainEnterEventName = 'FlutterEngineMainEnter';
 const String _kFrameworkInitEventName = 'Framework initialization';
-const String _kFirstUsefulFrameEventName = 'Widgets completed first useful frame';
+//const String _kFirstUsefulFrameEventName = 'Widgets completed first useful frame';
+const String _kFirstUsefulFrameEventName = 'Flutter.FirstFrame';
 
 class Tracing {
   Tracing(this.vmService);
@@ -37,6 +38,7 @@ class Tracing {
   Future<Map<String, dynamic>> stopTracingAndDownloadTimeline({
     bool awaitFirstFrame = false
   }) async {
+    logger.printError('stopTracingAndDownloadTimeline');  // TODO TEST
     if (awaitFirstFrame) {
       final Status status = logger.startProgress(
         'Waiting for application to render first frame...',
@@ -45,8 +47,10 @@ class Tracing {
       try {
         final Completer<void> whenFirstFrameRendered = Completer<void>();
         (await vmService.onTimelineEvent).listen((ServiceEvent timelineEvent) {
+          logger.printError('(await vmService.onTimelineEvent).listen((ServiceEvent timelineEvent)');  // TODO TEST
           final List<Map<String, dynamic>> events = timelineEvent.timelineEvents;
           for (Map<String, dynamic> event in events) {
+            logger.printError('Event received: ${event['name']}');  // TODO TEST
             if (event['name'] == _kFirstUsefulFrameEventName)
               whenFirstFrameRendered.complete();
           }
@@ -57,7 +61,9 @@ class Tracing {
             done = true;
             break;
           }
+          logger.printError('Waiting flutterAlreadyPaintedFirstUsefulFrame...');  // TODO TEST
         }
+        logger.printError('Done flutterAlreadyPaintedFirstUsefulFrame...');  // TODO TEST
         if (!done)
           await whenFirstFrameRendered.future;
       } catch (exception) {
