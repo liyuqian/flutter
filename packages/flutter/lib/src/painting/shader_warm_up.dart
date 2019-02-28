@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:developer';
+import 'dart:math' show pi;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -104,6 +105,8 @@ class DefaultShaderWarmUp extends ShaderWarmUp {
   /// compilation cache.
   @override
   void warmUpOnCanvas(ui.Canvas canvas) {
+    final ui.Path rectPath = ui.Path()..addRect(ui.Rect.fromLTRB(20.0, 20.0, 60.0, 60.0));
+
     final ui.RRect rrect = ui.RRect.fromLTRBXY(20.0, 20.0, 60.0, 60.0, 10.0, 10.0);
     final ui.Path rrectPath = ui.Path()..addRRect(rrect);
 
@@ -132,7 +135,7 @@ class DefaultShaderWarmUp extends ShaderWarmUp {
     // the associated paint configurations. According to our experience and
     // tracing, drawing the following paths/paints generates various of
     // shaders that are commonly used.
-    final List<ui.Path> paths = <ui.Path>[rrectPath, circlePath, path, convexPath];
+    final List<ui.Path> paths = <ui.Path>[rectPath, rrectPath, circlePath, path, convexPath];
 
     final List<ui.Paint> paints = <ui.Paint>[
       ui.Paint()
@@ -165,9 +168,30 @@ class DefaultShaderWarmUp extends ShaderWarmUp {
     // Warm up shadow shaders.
     const ui.Color black = ui.Color(0xFF000000);
     canvas.save();
+    canvas.drawShadow(rectPath, black, 10.0, true);
+    canvas.translate(80.0, 0.0);
+    canvas.drawShadow(rectPath, black, 10.0, false);
+    canvas.translate(80.0, 0.0);
     canvas.drawShadow(rrectPath, black, 10.0, true);
     canvas.translate(80.0, 0.0);
     canvas.drawShadow(rrectPath, black, 10.0, false);
+    canvas.restore();
+
+    // [BoxShadow] draws a blurred rect, sometimes at an angle
+    canvas.translate(0.0, 80.0);
+    canvas.save();
+    for (double rotation in <double>[.0, pi / 4]) {
+      canvas.save();
+      canvas.rotate(rotation);
+      final ui.Paint blurPaint = ui.Paint()
+        ..color = const ui.Color(0x7F000000)
+        ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4.0);
+      canvas.drawRect(ui.Rect.fromLTRB(20.0, 20.0, 60.0, 30.0), blurPaint);
+      canvas.drawRect(ui.Rect.fromLTRB(20.0, 40.0, 60.0, 50.0), paints[0]);
+      canvas.drawRect(ui.Rect.fromLTRB(20.0, 60.0, 50.0, 70.0), paints[1]);
+      canvas.restore();
+      canvas.translate(80.0, 0.0);
+    }
     canvas.restore();
 
     // Warm up text shaders.
