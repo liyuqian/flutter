@@ -961,6 +961,13 @@ abstract class ResidentRunner {
     final List<FlutterView> views = await flutterDevices
       .first
       .vmService.getFlutterViews();
+
+    final Map<String, Object> memoryData = await flutterDevices.first.vmService.estimateRasterCacheMemory(
+      viewId: views.first.id,
+    );
+    print('estimateRasterCacheMemory data: $memoryData');
+
+
     final Map<String, Object> data = await flutterDevices.first.vmService.getSkSLs(
       viewId: views.first.id,
     );

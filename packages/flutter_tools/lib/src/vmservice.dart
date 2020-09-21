@@ -477,6 +477,18 @@ extension FlutterVmService on vm_service.VmService {
     return response.json['SkSLs'] as Map<String, Object>;
   }
 
+  Future<Map<String, Object>> estimateRasterCacheMemory({
+    @required String viewId,
+  }) async {
+    final vm_service.Response response = await callMethod(
+      '_flutter.estimateRasterCacheMemory',
+      args: <String, String>{
+        'viewId': viewId,
+      },
+    );
+    return response.json;
+  }
+
   /// Flush all tasks on the UI thead for an attached Flutter view.
   ///
   /// This method is currently used only for benchmarking.
